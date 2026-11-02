@@ -42,73 +42,239 @@
                 <input type="text" id="search-input" onkeyup="filterList()" placeholder="Yazar veya eser ara..." class="w-full p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500">
             </div>
             <div id="archive-container" class="space-y-4 max-h-96 overflow-y-auto pr-2">
-  </div>
+                <!-- Dinamik liste buraya dolacak -->
+            </div>
+        </div>
 
+        <!-- Sonuç Ekranı -->
+        <div id="result-section" class="hidden text-center py-10">
+            <h2 class="text-3xl font-extrabold text-indigo-700 mb-2">Harika İş Çıkardın!</h2>
+            <p id="final-score-text" class="text-xl text-gray-700 mb-6 font-medium"></p>
+            <button onclick="restartApp()" class="bg-indigo-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-indigo-700 transition shadow-lg">
+                Testi Baştan Başlat
+            </button>
+        </div>
+    </div>
 
-function nextQuestion() {
+    <script>
+        // Tüm notlardaki yazar ve eser veritabanı
+        const database = [
+            { author: "Nâzım Hikmet Ran", category: "Serbest Toplumcu Şiir", works: ["Güneşi İçenlerin Türküsü", "835 Satır", "Jokond ile Si-Ya-U", "Taranta Babu'ya Mektuplar", "Sesini Kaybeden Şehir", "Benerci Kendini Niçin Öldürdü?", "1+1=1"] },
+            { author: "Ercüment Behzat Lav", category: "Serbest Toplumcu Şiir", works: ["S.O.S", "Mau Mau", "Kaos", "Üç Anadolu", "Açıl Kilidim Açıl"] },
+            { author: "Rıfat Ilgaz", category: "Serbest Toplumcu Şiir / Toplumcu Gerçekçiler", works: ["Yarenlik", "Sınıf", "Yaşadıkça", "Güvercinim Uyur mu?", "Üsküdar'da Sabah Olmuş", "Kulağımız Kirişte", "Karakılçık", "Radarın Anahtarı", "Garibin Horozu", "Don Kişot İstanbul'da", "Şevket Ustanın Kedisi"] },
+            { author: "Ahmet Arif", category: "Serbest Toplumcu Şiir", works: ["Hasretinden Prangalar Eskittim"] },
+            { author: "Hasan İzzettin Dinamo", category: "Serbest Toplumcu Şiir", works: ["Deniz Feneri", "Adsız Kitap", "Özgürlük Türküsü", "Mapushaneden Şiirler", "Karacaahmet Senfonisi", "Sürgün Şiirleri", "Gecekondumdan Şiirler"] },
+            { author: "Ceyhun Atuf Kansu", category: "Serbest Toplumcu Şiir", works: ["Bir Çocuk Bahçesinde", "Bağbozumu Sofrası", "Sakarya Meydan Savaşı", "Bağımsızlık Gülü"] },
+            { author: "Can Yücel", category: "Serbest Toplumcu Şiir", works: ["Sevgi Duvarı", "Şiir Alayı", "Can Feda", "Sevke Seke", "Ölüm ve Oğlum", "Bir Siyasinin Şiirleri", "Kuzgunun Yavrusu", "Gece Vardiyası"] },
+            { author: "Hasan Hüseyin Korkmazgil", category: "Serbest Toplumcu Şiir", works: ["Kızıl Kuğu", "Kızılırmak", "Oğlak", "Acıyı Bal Eyledik", "Kavel", "Temmuz Bildirisi", "Kelepçenin Karasında Bir Ak Güvercin"] },
+            
+            { author: "Ahmet Hamdi Tanpınar", category: "Saf Şiir / Bireyin İç Dünyası", works: ["Şiirler (Bursa'da Zaman)", "Abdullah Efendinin Rüyaları", "Yaz Yağmuru"] },
+            { author: "Necip Fazıl Kısakürek", category: "Saf Şiir", works: ["Örümcek Ağı", "Çile", "Kaldırımlar", "Ben ve Ötesi", "Sonsuzluk Kervanı"] },
+            { author: "Ahmet Muhip Dıranas", category: "Saf Şiir", works: ["Şiirler (Fahriye Abla, Kar, Olvido, Ağrı, Serenad)"] },
+            { author: "Cahit Sıtkı Tarancı", category: "Saf Şiir", works: ["35 Yaş", "Ömrümde Sükût", "Sonrası", "Düşten Güzel"] },
+            { author: "Asaf Halet Çelebi", category: "Saf Şiir", works: ["OM Mani Padme Hum", "He", "Lâm Alif"] },
 
-currentIdx++;
+            { author: "Ziya Osman Saba", category: "Yedi Meşaleciler / Bireyin İç Dünyası", works: ["Sebil ve Güvercinler", "Nefes Almak", "Geçen Zaman", "Mesut İnsanlar Fotoğrafhanesi", "Değişen İstanbul"] },
+            { author: "Yaşar Nabi Nayır", category: "Yedi Meşaleciler", works: ["Kahramanlar", "Onar Mısra"] },
+            { author: "Sabri Esat Siyavuşgil", category: "Yedi Meşaleciler", works: ["Odalar ve Sofalar"] },
+            { author: "Cevdet Kudret Solok", category: "Yedi Meşaleciler", works: ["Birinci Perde"] },
+            { author: "Muammer Lütfi Bahşi", category: "Yedi Meşaleciler", works: ["Yazım Hayatını Sürdürmedi"] },
+            { author: "Vasfi Mahir Kocatürk", category: "Yedi Meşaleciler", works: ["Tuna Sesleri", "Ergenekon", "Bizim Türküler", "Geçmiş Geceler", "Dağların Derdi", "Hayat Şarkıları"] },
 
-loadQuestion();
+            { author: "Necbettin Halil Onan", category: "Milli Edebiyat", works: ["Çakıl Taşları", "Bir Yudum Daha"] },
+            { author: "Ahmet Kutsi Tecer", category: "Milli Edebiyat", works: ["Şiirler (Neredesin, Orada Bir Köy Var)"] },
+            { author: "Kemalettin Kamu", category: "Milli Edebiyat (Gurbet Şairi)", works: ["Gurbet", "Bingöl Çobanları", "Gurbet Geceleri", "İzmir'le Tenassür", "İrşad", "Söğüt"] },
+            { author: "Orhan Şaik Gökyay", category: "Milli Edebiyat", works: ["Bu Vatan Kimin"] },
+            { author: "Zeki Ömer Defne", category: "Milli Edebiyat", works: ["Denizden Çalınmış Ülke", "Sessiz Nehir", "Kardelenler"] },
+            { author: "Ömer Bedrettin Uşaklı", category: "Milli Edebiyat", works: ["Deniz Sarhoşları", "Deniz Hasreti", "Sarıkız Mermerleri", "Yayla Dumanı"] },
+            { author: "Arif Nihat Asya", category: "Milli Edebiyat (Bayrak Şairi)", works: ["Bir Bayrak Rüzgar Bekliyor", "Dualar ve Aminler", "Kökler ve Dallar", "Kubbe-i Hadra", "Kundaklar", "Aynada Kalan", "Fatihler Ölmez", "Rubaiyat-ı Arif", "Ayetler", "Yastığımın Rüyası"] },
+            { author: "Behçet Kemal Çağlar", category: "Milli Edebiyat (Atatürk Şairi)", works: ["Erciyesten Kopan Çığ", "Burada Bir Kalp Çarpıyor", "Benden İçeri"] },
 
-}
+            { author: "Sabahattin Ali", category: "Toplumcu Gerçekçiler", works: ["Ses", "Sırça Köşk", "Kağnı", "Yeni Dünya", "Değirmen"] },
+            { author: "Sadri Ertem", category: "Toplumcu Gerçekçiler", works: ["Bay Virgül", "Bacayı İndir Bacayı Kaldır", "Silindir Şapka Giyen Köylü", "Korku"] },
+            { author: "Orhan Kemal", category: "Toplumcu Gerçekçiler", works: ["Ekmek Kavgası", "Kardeş Payı", "Önce Ekmek", "72. Koğuş", "Dünya'da Harp Vardı", "Çamaşırcının Kızı", "İşsiz", "Sarmaşık", "Grev"] },
+            { author: "Yaşar Kemal", category: "Toplumcu Gerçekçiler", works: ["Sarı Sıcak"] },
+            { author: "Kemal Tahir", category: "Toplumcu Gerçekçiler", works: ["Göl İnsanları"] },
+            { author: "Necati Cumalı", category: "Toplumcu Gerçekçiler", works: ["Ay Büyürken Uyuyamam", "Makedonya 1900", "Susuz Yaz", "Kente İnen Kaplanlar", "Yakup'un Koyunları", "Değişik Gözle", "Dila Hanım"] },
+            { author: "Aziz Nesin", category: "Toplumcu Gerçekçiler", works: ["Fil Hamdi", "Medeniyetin Yedek Parçası", "Hangi Parti Kazanacak", "Ölmüş Eşek", "Nazik Alet"] },
+            { author: "Samim Kocagöz", category: "Toplumcu Gerçekçiler", works: ["Alandaki Delikanlı", "Sam Amca", "Telli Kavak", "Sığınak", "Ahmet'in Kuzuları"] },
+            { author: "Fakir Baykurt", category: "Toplumcu Gerçekçiler", works: ["Çilli", "Efendilik Savaşı", "Karın Ağrısı", "Can Parası", "İçerdeki Oğul", "Anadolu Garajı", "Onbinlerce Kağnı", "Cüce Muhammet"] },
+            { author: "Dursun Akçam", category: "Toplumcu Gerçekçiler", works: ["Maral", "Ölü Ekmeği", "Köyden İndim Şehre", "Alaman Ocağı"] },
 
+            { author: "Tarık Buğra", category: "Bireyin İç Dünyası", works: ["Oğlumuz", "İki Uyku Arasında", "Yarın Diye Bir Şey Yoktur"] },
+            { author: "Peyami Safa", category: "Bireyin İç Dünyası", works: ["İstanbul Hikayeleri", "Beyaz Gölgeler", "Sümbüllerin Gölgesinde", "Ateş Böcekleri", "Bir Mekteplinin Hatırası: Karanlıklar Kralı"] },
+            { author: "Oktay Akbal", category: "Bireyin İç Dünyası", works: ["Önce Ekmekler Bozuldu", "Bizans Definesi", "Aşksız İnsanlar", "Aşka Geç Kaldım", "Berber Aynası", "Yalnızlık Bana Yasak"] },
+            { author: "Sait Faik Abasıyanık", category: "Bireyin İç Dünyası", works: ["Semaver", "Şahmerdan", "Sarnıç", "Mahalle Kahvesi", "Az Şekerli", "Son Kuşlar", "Alemdağ'da Var Bir Yılan", "Havada Bulut", "Kumpanya", "Tüneldeki Çocuk"] },
+            { author: "Kenan Hulusi Koray", category: "Bireyin İç Dünyası", works: ["Bir Yudum Su", "Bir Otelde 7 Kişi", "Son Öpüş", "Bahar Hikayeleri"] },
+            { author: "Mustafa Kutlu", category: "Bireyin İç Dünyası", works: ["Ortadaki Adam", "Gönül İşi", "Uzun Hikaye", "Bu Böyledir", "Beyhude Ömrüm", "Mavi Kuş", "Yoksulluk İçimizde", "Yokuşa Akan Sular", "Ya Tahammül Ya Sefer"] },
 
-function renderArchive() {
+            { author: "Halide Edip Adıvar", category: "Milli ve Dini Duyarlılık", works: ["Dağa Çıkan Kurt", "İzmir'den Bursa'ya", "Harap Mabetler", "Kubbede Kalan Hoş Bir Seda"] },
+            { author: "Yakup Kadri Karaosmanoğlu", category: "Milli ve Dini Duyarlılık", works: ["Milli Savaş Hikayeleri", "Bir Serencam", "Rahmet"] },
+            { author: "Refik Halit Karay", category: "Milli ve Dini Duyarlılık", works: ["Memleket Hikayeleri", "Gurbet Hikayeleri", "Şeftali Bahçeleri", "Testi, Zincir, Eskici"] },
+            { author: "Reşat Nuri Güntekin", category: "Milli ve Dini Duyarlılık", works: ["Tanrı Misafiri", "Olağan İşler", "Sönmüş Yıldızlar", "Leyla ile Mecnun", "Gençlik ve Güzellik"] },
+            { author: "Memduh Şevket Esendal", category: "Milli ve Dini Duyarlılık", works: ["Mendil Altında", "Temiz Sevgiler", "Kelepir Ev", "Ev Ona Yakıştı", "İhtiyar Çilingir", "Otlakçı"] },
+            { author: "Aka Gündüz", category: "Milli ve Dini Duyarlılık", works: ["Türk Kalbi", "Türk'ün Kitabı", "Bu Toprağın Kızları", "Hayattan Hikayeler", "Sarı Zeybek"] },
+            { author: "Halide Nusret Zorlutuna", category: "Milli ve Dini Duyarlılık", works: ["Beyaz Selvi", "Aydınlık Kapı", "Büyük Anne"] },
+            { author: "Mustafa Necati Sepetçioğlu", category: "Milli ve Dini Duyarlılık", works: ["Abdülrezzak Efendi", "Menevşeler Ölmemeli"] },
+            { author: "Nihal Atsız", category: "Milli ve Dini Duyarlılık", works: ["Dönüş", "Şehitlerin Duası", "İki Onbaşı", "Erkek Kız", "Her Çağın Masalı - Boz Oğlanla Sarı Yılan"] },
+            { author: "Fahri Celalettin Göktulga", category: "Milli ve Dini Duyarlılık", works: ["Telak-ı Selase", "Düşmana İpucu Veren Eşekler", "Anzavur Kahvesi"] },
+            { author: "Halikarnas Balıkçısı", category: "Milli ve Dini Duyarlılık", works: ["Egenin Dibi", "Ege Kıyılarından", "Gençlik Denizlerinde", "Gülen Ada", "Parmak Damgası", "Merhaba Akdeniz", "Yaşasın Deniz"] },
 
-const container = document.getElementById("archive-container");
+            { author: "Yusuf Atılgan", category: "Modernizmi Esas Alan", works: ["Eylenci", "Bodur Minareden Öte"] },
+            { author: "Oğuz Atay", category: "Modernizmi Esas Alan", works: ["Korkuyu Beklerken"] },
+            { author: "Vüs'at O. Bener", category: "Modernizmi Esas Alan", works: ["Siyah Beyaz", "Kara Tren", "Mızıkalı Yürüyüş", "Dost", "Yaşamasız", "Kapan"] },
+            { author: "Nezihe Meriç", category: "Modernizmi Esas Alan", works: ["Bozbulanık", "Menekşeli Bilinç", "Bir Kara Derin Kuyu", "Topal Koşma", "Gülün İçinde Bülbül Sesi Var", "Dumanaltı"] },
+            { author: "Sabahattin Kudret Aksal", category: "Modernizmi Esas Alan", works: ["Yaralı Hayvan", "Gazoz Ağacı"] },
+            { author: "Adalet Ağaoğlu", category: "Modernizmi Esas Alan", works: ["Hadi Gidelim", "Yüksek Gerilim", "Sessizliğin İlk Sesi", "Hayatı Savunma Biçimleri"] },
+            { author: "Bilge Karasu", category: "Modernizmi Esas Alan", works: ["Troya'da Ölüm Vardı", "Uzun Sürmüş Bir Günün Akşamı", "Göçmüş Kediler Bahçesi", "Kısmet Büfesi"] },
+            { author: "Füruzan", category: "Modernizmi Esas Alan", works: ["Benim Sinemalarım", "Parasız Yatılı", "Gül Mevsimidir", "Sevda Dolu Bir Yaz", "Gecenin Öteki Yüzü"] },
+            { author: "Rasim Özdenören", category: "Modernizmi Esas Alan", works: ["Hastalar ve Işıklar", "Çözülme", "Gök Sessiz Bir Ölüm", "Ansızın Yola Çıkmak", "Denize Açılan Bir Kapı"] },
+            { author: "Sevinç Çokum", category: "Modernizmi Esas Alan", works: ["Eğik Ağaçlar", "Derin Yara", "Rozalya Ana", "Onlardan Kalan", "Makine", "Bölüşmek", "Gece Kuşu Uzun Öter", "Bir Eski Sokak Sesi", "Evlerinin Önü"] },
+            { author: "Leyla Erbil", category: "Modernizmi Esas Alan", works: ["Gecede", "Hallaç", "Eski Sevgili"] },
+            { author: "Ferit Edgü", category: "Modernizmi Esas Alan", works: ["Doğu Öyküleri", "Do Sesi", "Nijinski Öyküleri", "Bozgun", "Kaçkın", "Bir Gemide", "Çığlık"] },
+            { author: "Haldun Taner", category: "Modernizmi Esas Alan", works: ["Tuş", "Ay Işığında Çalışkur", "Konçinalar", "Yaşasın Demokrasi", "Şişhane'ye Yağmur Yağıyordu", "Sanço'nun Sabah Yürüyüşü"] },
+            { author: "Tomris Uyar", category: "Modernizmi Esas Alan", works: ["İpek ve Bakır", "Gece Gezen Kızlar", "Yürekde Bukağı", "Yaz Düşleri ve Salıverilen Hikayesi"] }
+        ];
 
-container.innerHTML = "";
+        let currentIdx = 0;
+        let score = 0;
+        let answered = false;
+        let quizPool = [];
 
-database.forEach(item => {
+        function switchTab(tab) {
+            const quizSec = document.getElementById("quiz-section");
+            const listSec = document.getElementById("list-section");
+            const btnQuiz = document.getElementById("btn-quiz");
+            const btnList = document.getElementById("btn-list");
+            const resultSec = document.getElementById("result-section");
 
-const div = document.createElement("div");
+            if (tab === 'quiz') {
+                quizSec.classList.remove("hidden");
+                listSec.classList.add("hidden");
+                resultSec.classList.add("hidden");
+                btnQuiz.className = "px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow transition";
+                btnList.className = "px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition";
+            } else {
+                quizSec.classList.add("hidden");
+                resultSec.classList.add("hidden");
+                listSec.classList.remove("hidden");
+                btnList.className = "px-4 py-2 bg-indigo-600 text-white font-semibold rounded-lg shadow transition";
+                btnQuiz.className = "px-4 py-2 bg-gray-200 text-gray-700 font-semibold rounded-lg hover:bg-gray-300 transition";
+                renderArchive();
+            }
+        }
 
-div.className = "p-4 border rounded-xl bg-white shadow-sm";
+        function initQuiz() {
+            quizPool = [...database].sort(() => 0.5 - Math.random()).slice(0, 20);
+            currentIdx = 0;
+            score = 0;
+            document.getElementById("result-section").classList.add("hidden");
+            document.getElementById("quiz-section").classList.remove("hidden");
+            loadQuestion();
+        }
 
-div.innerHTML = `<h3 class="font-bold text-indigo-700">${item.author} <span class="text-xs text-gray-400 font-normal">(${item.category})</span></h3>
+        function loadQuestion() {
+            if (currentIdx >= quizPool.length) {
+                document.getElementById("quiz-section").classList.add("hidden");
+                document.getElementById("result-section").classList.remove("hidden");
+                document.getElementById("final-score-text").innerText = `Toplam Puanın: ${score} / ${quizPool.length * 10}`;
+                return;
+            }
 
-<p class="text-sm text-gray-600 mt-1"><b>Eserler:</b> ${item.works.join(", ")}</p>`;
+            answered = false;
+            const currentObj = quizPool[currentIdx];
+            document.getElementById("q-counter").innerText = `Soru ${currentIdx + 1} / ${quizPool.length}`;
+            document.getElementById("q-score").innerText = `Puan: ${score}`;
+            document.getElementById("question-box").innerText = `'${currentObj.works[Math.floor(Math.random() * currentObj.works.length)]}' adlı eser aşağıdaki yazarlardan hangisine aittir?`;
 
-container.appendChild(div);
+            let options = [currentObj.author];
+            while (options.length < 4) {
+                let randomAuthor = database[Math.floor(Math.random() * database.length)].author;
+                if (!options.includes(randomAuthor)) {
+                    options.push(randomAuthor);
+                }
+            }
+            options.sort(() => 0.5 - Math.random());
 
-});
+            const container = document.getElementById("options-container");
+            container.innerHTML = "";
+            options.forEach(opt => {
+                const btn = document.createElement("button");
+                btn.className = "w-full text-left p-3 rounded-xl border border-gray-200 hover:bg-indigo-50 hover:border-indigo-300 transition font-medium text-gray-700 shadow-sm";
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, currentObj.author);
+                container.appendChild(btn);
+            });
 
-}
+            document.getElementById("explanation-box").classList.add("hidden");
+            document.getElementById("next-q-btn").classList.add("hidden");
+        }
 
+        function checkAnswer(selected, correct) {
+            if (answered) return;
+            answered = true;
 
-function filterList() {
+            const buttons = document.getElementById("options-container").children;
+            for (let b of buttons) {
+                if (b.innerText === correct) {
+                    b.classList.add("bg-emerald-100", "border-emerald-500", "text-emerald-800");
+                }
+                if (b.innerText === selected && selected !== correct) {
+                    b.classList.add("bg-rose-100", "border-rose-500", "text-rose-800");
+                }
+            }
 
-let query = document.getElementById("search-input").value.toLowerCase();
+            if (selected === correct) {
+                score += 10;
+                document.getElementById("q-score").innerText = `Puan: ${score}`;
+            }
 
-const container = document.getElementById("archive-container");
+            const expBox = document.getElementById("explanation-box");
+            const authorData = database.find(d => d.author === correct);
+            expBox.innerText = `Doğru Cevap: ${correct} (${authorData ? authorData.category : ''})`;
+            expBox.classList.remove("hidden");
+            document.getElementById("next-q-btn").classList.remove("hidden");
+        }
 
-container.innerHTML = "";
+        function nextQuestion() {
+            currentIdx++;
+            loadQuestion();
+        }
 
-database.filter(item => item.author.toLowerCase().includes(query) || item.works.some(w => w.toLowerCase().includes(query))).forEach(item => {
+        function restartApp() {
+            initQuiz();
+        }
 
-const div = document.createElement("div");
+        function renderArchive() {
+            const container = document.getElementById("archive-container");
+            container.innerHTML = "";
+            database.forEach(item => {
+                const div = document.createElement("div");
+                div.className = "p-4 border rounded-xl bg-white shadow-sm";
+                div.innerHTML = `<h3 class="font-bold text-indigo-700">${item.author} <span class="text-xs text-gray-400 font-normal">(${item.category})</span></h3>
+                                 <p class="text-sm text-gray-600 mt-1"><b>Eserler:</b> ${item.works.join(", ")}</p>`;
+                container.appendChild(div);
+            });
+        }
 
-div.className = "p-4 border rounded-xl bg-white shadow-sm";
+        function filterList() {
+            let query = document.getElementById("search-input").value.toLowerCase();
+            const container = document.getElementById("archive-container");
+            container.innerHTML = "";
+            
+            database.filter(item => item.author.toLowerCase().includes(query) || item.works.some(w => w.toLowerCase().includes(query))).forEach(item => {
+                const div = document.createElement("div");
+                div.className = "p-4 border rounded-xl bg-white shadow-sm";
+                div.innerHTML = `<h3 class="font-bold text-indigo-700">${item.author} <span class="text-xs text-gray-400 font-normal">(${item.category})</span></h3>
+                                 <p class="text-sm text-gray-600 mt-1"><b>Eserler:</b> ${item.works.join(", ")}</p>`;
+                container.appendChild(div);
+            });
+        }
 
-div.innerHTML = `<h3 class="font-bold text-indigo-700">${item.author} <span class="text-xs text-gray-400 font-normal">(${item.category})</span></h3>
-
-<p class="text-sm text-gray-600 mt-1"><b>Eserler:</b> ${item.works.join(", ")}</p>`;
-
-container.appendChild(div);
-
-});
-
-}
-
-
-initQuiz();
-
-</script>
-
+        // Sayfa açıldığında testi başlat
+        window.onload = function() {
+            initQuiz();
+        };
+    </script>
 </body>
-
 </html>
-
-```eof
-      
